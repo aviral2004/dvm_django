@@ -1,0 +1,33 @@
+{% extends 'quiz/base.html' %}
+
+{% block content %}
+  {% include 'quiz/quiztaker/header.html' with active='new' %}
+  <div class="card">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Quiz</th>
+          <th>Creator</th>
+          <th>Questions</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for quiz in quizzes %}
+          <tr>
+            <td class="align-middle">{{ quiz.name }}</td>
+            <td class="align-middle">{{ quiz.owner }}</td>
+            <td class="align-middle">{{ quiz.questions_count }} questions</td>
+            <td class="text-right">
+              <a href="{% url 'quiztaker:take_quiz' quiz.pk %}" class="btn btn-primary">Start quiz</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="bg-light text-center font-italic" colspan="4">No quizzes right now.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
