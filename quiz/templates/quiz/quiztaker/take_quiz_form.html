@@ -8,36 +8,84 @@
   <form method='post' action=''>
     {% csrf_token %}
     {% for q in questions%}
-        <div class="form-group">
-            <label for="question">Q{{q.num}} {{q.ques.question_text}}</label>
+
+    <div class="card bg-light mb-3">
+        
+        <!-- 
+          <h5 class="card-title">Primary card title</h5>
+          <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+        </div> -->
+        <div class="card-header text-muted">Q{{q.num}}</div>
+        <div class="card-body">
+            <label for="question">{{q.ques.question_text}}</label>
+            {% if q.type == 'multiplechoice' %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios1" value="option1">
+                    <label class="form-check-label" for="gridRadios1">
+                        {{q.ques.optionA}}
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios2" value="option2">
+                    <label class="form-check-label" for="gridRadios2">
+                        {{q.ques.optionB}}
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios1" value="option3">
+                    <label class="form-check-label" for="gridRadios1">
+                        {{q.ques.optionC}}
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios2" value="option4">
+                    <label class="form-check-label" for="gridRadios2">
+                        {{q.ques.optionD}}
+                    </label>
+                </div>
+            {% elif q.type == 'truefalse' %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios1" value="true">
+                    <label class="form-check-label" for="gridRadios1">
+                        True
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios1" value="false">
+                    <label class="form-check-label" for="gridRadios1">
+                        False
+                    </label>
+                </div>
+            {% elif q.type == 'numerical' %}
+                <input type="number" class="form-control" name="{{q.num}}" id="numerical" placeholder="Enter your answer">
+            {% elif q.type == 'multiplecorrect' %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{{q.num}}" id="gridRadios1" value="option1">
+                    <label class="form-check-label" for="gridRadios1">
+                        {{q.ques.optionA}}
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{{q.num}}" id="gridRadios2" value="option2">
+                    <label class="form-check-label" for="gridRadios2">
+                        {{q.ques.optionB}}
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{{q.num}}" id="gridRadios1" value="option3">
+                    <label class="form-check-label" for="gridRadios1">
+                        {{q.ques.optionC}}
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{{q.num}}" id="gridRadios2" value="option4">
+                    <label class="form-check-label" for="gridRadios2">
+                        {{q.ques.optionD}}
+                    </label>
+                </div>
+            {% endif %}
         </div>
-        <div class="form-check">
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios1" value="option1">
-                <label class="form-check-label" for="gridRadios1">
-                    {{q.ques.multiplechoice.optionA}}
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios2" value="option2">
-                <label class="form-check-label" for="gridRadios2">
-                    {{q.ques.multiplechoice.optionB}}
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios1" value="option3">
-                <label class="form-check-label" for="gridRadios1">
-                    {{q.ques.multiplechoice.optionC}}
-                </label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="{{q.num}}" id="gridRadios2" value="option4">
-                <label class="form-check-label" for="gridRadios2">
-                    {{q.ques.multiplechoice.optionD}}
-                </label>
-            </div>
-        </div>
-        <hr>
+    </div>
     {% endfor %}
     <br>
     <button type="submit" class="btn btn-primary">Submit</button>

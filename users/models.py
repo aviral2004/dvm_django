@@ -11,4 +11,4 @@ class QuizTaker(models.Model):
     quizzes = models.ManyToManyField('quiz.Quiz', through='quiz.TakenQuiz', related_name='taken_by')
 
     def __str__(self):
-        return self.user.email
+        return self.user.username

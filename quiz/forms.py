@@ -1,30 +1,67 @@
 from django import forms
-from quiz.models import answered_question, Quiz, MultipleChoice
+from quiz.models import answered_question, Quiz, MultipleChoice, NumericalQuestion, TrueFalseQuestion, MultipleCorrectQuestion
 
 
-# class TakeQuizForm(forms.ModelForm):
-#     # answer = forms.ModelChoiceField(
-#     #     queryset=Answer.objects.none(),
-#     #     widget=forms.RadioSelect(),
-#     #     required=True,
-#     #     empty_label=None)
+# create a basic form to select type of question from dropdown
+class QuestionSelectForm(forms.Form):
+    question_type = forms.ChoiceField(
+        choices = (
+            ('numerical', 'Numerical'),
+            ('truefalse', 'True/False'),
+            ('multiplecorrect', 'Multiple Correct'),
+            ('multiplechoice', 'Multiple Choice'),
+        ),
+        required = True,
+    )
 
-#     def __init__(self, *args, **kwargs):
-#         question = kwargs.pop('question')
-#         super().__init__(*args, **kwargs)
-#         self.fields['answer'].choices = question.answers.order_by('text')
 
-#     answer = forms.ChoiceField(
-#         widget=forms.RadioSelect,
-#         required=True,
-#         empty_label=None
-#     )
-
-#     class Meta:
-#         model = answered_question
-#         fields = ('answer', )
-
-class QuestionForm(forms.ModelForm):
+class MultipleChoiceQuestionForm(forms.ModelForm):
     class Meta:
         model = MultipleChoice
-        fields = ('question_text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct_option')
+        fields = ('question_text', 'correct_score', 'incorrect_score', 'optionA', 'optionB', 'optionC', 'optionD', 'answer')
+        labels = {
+            'correct_score': 'Points for correct answer',
+            'incorrect_score': 'Penalty for incorrect answer',
+        }
+
+# make form for numerical question
+class NumericalQuestionForm(forms.ModelForm):
+    class Meta:
+        model = NumericalQuestion
+        fields = ('question_text', 'correct_score', 'incorrect_score', 'answer')
+        labels = {
+            'correct_score': 'Points for correct answer',
+            'incorrect_score': 'Penalty for incorrect answer',
+        }
+
+# make form for true/false question
+class TrueFalseQuestionForm(forms.ModelForm):
+    # make a dropdown selecting true or false for answer field
+    answer = forms.ChoiceField(
+        choices = (
+            ('True', 'True'),
+            ('False', 'False'),
+        ),
+        required = True,
+    )
+    class Meta:
+        model = TrueFalseQuestion
+        fields = ('question_text', 'correct_score', 'incorrect_score', 'answer')
+        labels = {
+            'correct_score': 'Points for correct answer',
+            'incorrect_score': 'Penalty for incorrect answer',
+        }
+
+# make form for multiple correct question
+class MultipleCorrectQuestionForm(forms.ModelForm):
+    class Meta:
+        model = MultipleCorrectQuestion
+        fields = ('question_text', 'correct_score', 'incorrect_score', 'optionA', 'optionB', 'optionC', 'optionD', 'answer')
+        labels = {
+            'correct_score': 'Points for correct answer',
+            'incorrect_score': 'Penalty for incorrect answer',
+        }
+
+# make for for entering pin
+class PinForm(forms.Form):
+    pin = forms.CharField(max_length=4, required=True)

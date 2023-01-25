@@ -3,26 +3,34 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-  {% if form.non_field_errors %}
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      {% for error in form.non_field_errors %}
-        <p{% if forloop.last %} class="mb-0"{% endif %}>{{ error }}</p>
-      {% endfor %}
-      <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
+{% if form.non_field_errors %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+  {% for error in form.non_field_errors %}
+  <p{% if forloop.last %} class="mb-0" {% endif %}>{{ error }}</p>
+    {% endfor %}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+{% endif %}
+
+<div class="content-section">
+  <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <fieldset class="form-group">
+      <legend class="border-bottom mb-4">Log In</legend>
+      {{ form.username|as_crispy_field }}
+      {{ form.password|as_crispy_field }}
+    </fieldset>
+    <div class="form-group">
+      <button class="btn btn-outline-info" type="submit">Login</button>
     </div>
-  {% endif %}
-  <div class="row">
-    <div class="col-lg-4 col-md-6 col-sm-8 col-12">
-      <h2>Log in</h2>
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <input type="hidden" name="next" value="{{ next }}">
-        {{ form.username|as_crispy_field }}
-        {{ form.password|as_crispy_field }}
-        <button type="submit" class="btn btn-primary">Log in</button>
-      </form>
-    </div>
+  </form>
+  <div class="border-top pt-3">
+    <small class="text-muted">
+      Need An Account? <a class="ml-2" href="{% url 'signup-select' %}">Sign Up Now</a>
+    </small>
   </div>
+</div>
 {% endblock %}

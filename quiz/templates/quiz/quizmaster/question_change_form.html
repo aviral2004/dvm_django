@@ -10,12 +10,12 @@
       <li class="breadcrumb-item active" aria-current="page">{{ question.text }}</li>
     </ol>
   </nav>
-  <h2 class="mb-3">{{ question.txt }}</h2>
+  <!-- <h2 class="mb-3">{{ question.txt }}</h2> -->
   <form method="post" novalidate>
     {% csrf_token %}
-    {{ formset.management_form }}
+    <!-- {{ formset.management_form }} -->
     {{ form|crispy }}
-    <div class="card mb-3{% if formset.errors %} border-danger{% endif %}">
+    <!-- <div class="card mb-3{% if formset.errors %} border-danger{% endif %}">
       {% for error in formset.non_form_errors %}
         <div class="card-body bg-danger border-danger text-white py-2">{{ error }}</div>
       {% endfor %}
@@ -40,7 +40,7 @@
           </div>
         {% endfor %}
       </div>
-    </div>
+    </div> -->
     <button type="submit" class="btn btn-success">Save changes</button>
     <a href="{% url 'quizmaster:quiz_change' quiz.pk %}" class="btn btn-outline-secondary" role="button">Nevermind</a>
     <a href="{% url 'quizmaster:question_delete' quiz.pk question.pk %}" class="btn btn-danger float-right">Delete</a>

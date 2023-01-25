@@ -1,17 +1,23 @@
+import xlwt
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Avg, Count
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 
+from quiz.forms import (MultipleChoiceQuestionForm,
+                        MultipleCorrectQuestionForm, NumericalQuestionForm,
+                        QuestionSelectForm, TrueFalseQuestionForm)
+from quiz.models import (MultipleChoice, MultipleCorrectQuestion,
+                         NumericalQuestion, Question, Quiz, TrueFalseQuestion)
 from users.decorators import quiz_master_required
-from quiz.forms import QuestionForm
-from quiz.models import MultipleChoice, Quiz
+
 
 @method_decorator([login_required, quiz_master_required], name='dispatch')
 class QuizListView(ListView):
@@ -22,14 +28,14 @@ class QuizListView(ListView):
 
     def get_queryset(self):
         queryset = self.request.user.quizzes \
-            .annotate(questions_count=Count('questions', distinct=True))
+            .annotate(questions_count=Count('questions', distinct=True), taken_count=Count('taken_quizzes', distinct=True))
         return queryset
 
 
 @method_decorator([login_required, quiz_master_required], name='dispatch')
 class QuizCreateView(CreateView):
     model = Quiz
-    fields = ('name', )
+    fields = ('name', 'private', 'pin')
     template_name = 'quiz/quizmaster/quiz_add_form.html'
 
     def form_valid(self, form):
@@ -43,10 +49,10 @@ class QuizCreateView(CreateView):
 @method_decorator([login_required, quiz_master_required], name='dispatch')
 class QuizUpdateView(UpdateView):
     model = Quiz
-    fields = ('name', )
+    fields = ('name', 'private', 'pin')
     context_object_name = 'quiz'
     template_name = 'quiz/quizmaster/quiz_change_form.html'
-
+    
     def get_context_data(self, **kwargs):
         kwargs['questions'] = self.get_object().questions.all()
         return super().get_context_data(**kwargs)
@@ -78,6 +84,47 @@ class QuizDeleteView(DeleteView):
     def get_queryset(self):
         return self.request.user.quizzes.all()
 
+# create a function that returns an excel file with the results of the quiz
+def export_quiz_results_to_excel(request, pk):
+    quiz = get_object_or_404(Quiz, pk=pk, owner=request.user)
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = f'attachment; filename="{quiz.name}_quiz_results.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet(quiz.name)
+
+    # Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['Taker', 'Score', 'Date']
+
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+
+    # convert datetime object to string
+    def convert_datetime_to_string(date):
+        return date.strftime('%Y-%m-%d %H:%M:%S')
+
+    xlwt.easyxf(num_format_str='YYYY-MM-DD HH:MM:SS')
+    rows = quiz.taken_quizzes.select_related('taker__user').values_list('taker__user__username', 'score', 'date')
+    print(rows)
+    for row in rows:
+        row_num += 1
+        for col_num in range(len(row)):
+            if col_num == 2:
+                date = convert_datetime_to_string(row[col_num])
+                ws.write(row_num, col_num, date, font_style)
+            else:
+                ws.write(row_num, col_num, row[col_num], font_style)
+
+    wb.save(response)
+    return response
 
 @method_decorator([login_required, quiz_master_required], name='dispatch')
 class QuizResultsView(DetailView):
@@ -102,14 +149,36 @@ class QuizResultsView(DetailView):
         return self.request.user.quizzes.all()
 
 
+def question_select(request, pk):
+    quiz = get_object_or_404(Quiz, pk=pk, owner=request.user)
+
+    if request.method == 'POST':
+        form = QuestionSelectForm(request.POST)
+        question_type = form.data['question_type']
+        request.session['question_type'] = question_type
+        return redirect('quizmaster:question_add', pk)
+    else:
+        form = QuestionSelectForm()
+        return render(request, 'quiz/quizmaster/question_select.html', {'form': form, 'quiz': quiz})
+
+def get_question_form(question_type):
+    if question_type == 'numerical':
+        QuestionForm = NumericalQuestionForm
+    elif question_type == 'multiplecorrect':
+        QuestionForm = MultipleCorrectQuestionForm
+    elif question_type == 'truefalse':
+        QuestionForm = TrueFalseQuestionForm
+    else:
+        QuestionForm = MultipleChoiceQuestionForm
+    return QuestionForm
+
 @login_required
 @quiz_master_required
 def question_add(request, pk):
-    # By filtering the quiz by the url keyword argument `pk` and
-    # by the owner, which is the logged in user, we are protecting
-    # this view at the object-level. Meaning only the owner of
-    # quiz will be able to add questions to it.
     quiz = get_object_or_404(Quiz, pk=pk, owner=request.user)
+    # get the question type from the url query string
+    question_type = request.session.get('question_type')
+    QuestionForm = get_question_form(question_type)
 
     if request.method == 'POST':
         form = QuestionForm(request.POST)
@@ -117,7 +186,6 @@ def question_add(request, pk):
             question = form.save(commit=False)
             question.quiz = quiz
             question.save()
-            messages.success(request, 'You may now add answers/options to the question.')
             return redirect('quizmaster:question_change', quiz.pk, question.pk)
     else:
         form = QuestionForm()
@@ -128,21 +196,15 @@ def question_add(request, pk):
 @login_required
 @quiz_master_required
 def question_change(request, quiz_pk, question_pk):
-    # Simlar to the `question_add` view, this view is also managing
-    # the permissions at object-level. By querying both `quiz` and
-    # `question` we are making sure only the owner of the quiz can
-    # change its details and also only questions that belongs to this
-    # specific quiz can be changed via this url (in cases where the
-    # user might have forged/player with the url params.
     quiz = get_object_or_404(Quiz, pk=quiz_pk, owner=request.user)
-    question = get_object_or_404(MultipleChoice, pk=question_pk, quiz=quiz)
-
+    question_object = get_object_or_404(Question, pk=question_pk)
+    question, type = question_object.TypedQuestion, question_object.type
+    QuestionForm = get_question_form(type)
     if request.method == 'POST':
         form = QuestionForm(request.POST, instance=question)
         if form.is_valid():
             with transaction.atomic():
                 form.save()
-            messages.success(request, 'Question and answers saved with success!')
             return redirect('quizmaster:quiz_change', quiz.pk)
     else:
         form = QuestionForm(instance=question)
@@ -156,7 +218,7 @@ def question_change(request, quiz_pk, question_pk):
 
 @method_decorator([login_required, quiz_master_required], name='dispatch')
 class QuestionDeleteView(DeleteView):
-    model = MultipleChoice
+    model = Question
     context_object_name = 'question'
     template_name = 'quiz/quizmaster/question_delete_confirm.html'
     pk_url_kwarg = 'question_pk'
@@ -168,11 +230,10 @@ class QuestionDeleteView(DeleteView):
 
     def delete(self, request, *args, **kwargs):
         question = self.get_object()
-        messages.success(request, 'The question %s was deleted with success!' % question.text)
         return super().delete(request, *args, **kwargs)
 
     def get_queryset(self):
-        return MultipleChoice.objects.filter(quiz__owner=self.request.user)
+        return Question.objects.filter(quiz__owner=self.request.user)
 
     def get_success_url(self):
         question = self.get_object()

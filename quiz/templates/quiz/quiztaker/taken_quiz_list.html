@@ -1,7 +1,7 @@
 {% extends 'quiz/base.html' %}
 
 {% block content %}
-  {% include 'quiz/quiztaker/header.html' with active='taken' %}
+  {% include 'quiz/quiztaker/header.html' with active='taken' title='Taken Quizzes'%}
   <div class="card">
     <table class="table mb-0">
       <thead>
@@ -15,14 +15,17 @@
       <tbody>
         {% for taken_quiz in taken_quizzes %}
           <tr>
-            <td>{{ taken_quiz.quiz.name }}</td>
-            <td>{{ taken_quiz.quiz.owner }}</td>
-            <td>{{ taken_quiz.date }}</td>
-            <td>{{ taken_quiz.score }}</td>
+            <td class="align-middle">{{ taken_quiz.quiz.name }}</td>
+            <td class="align-middle">{{ taken_quiz.quiz.owner }}</td>
+            <td class="align-middle">{{ taken_quiz.date }}</td>
+            <td class="align-middle">{{ taken_quiz.score }}</td>
+            <td class="text-center">
+              <a href="{% url 'quiztaker:leaderboard' taken_quiz.quiz.id %}" class="btn btn-primary">View Leaderboard</a>
+            </td>
           </tr>
         {% empty %}
           <tr>
-            <td class="bg-light text-center font-italic" colspan="3">You haven't completed any quiz yet.</td>
+            <td class="bg-light text-center font-italic" colspan="4">You haven't completed any quiz yet.</td>
           </tr>
         {% endfor %}
       </tbody>

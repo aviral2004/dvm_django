@@ -1,0 +1,27 @@
+{% extends 'quiz/base.html' %}
+
+{% block content %}
+  {% include 'quiz/quiztaker/header.html' with active='taken' title='Leaderboard' %}
+  <div class="card">
+    <table class="table mb-0">
+      <thead class="bg-light">
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Taken on</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for taken_quiz in taken_quizzes %}
+          <tr>
+            <td class="'text-midddle">{{ forloop.counter }}</td>
+            <td>{{ taken_quiz.taker }}</td>
+            <td>{{ taken_quiz.date }}</td>
+            <td>{{ taken_quiz.score }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

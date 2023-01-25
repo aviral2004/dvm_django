@@ -37,10 +37,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 
     'users',
     'crispy_forms',
-    'quiz'
+    'quiz',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google', # for Google OAuth 2.0
 ]
 
 MIDDLEWARE = [
@@ -51,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'users.middleware.QuizUserRequiredMiddleware'
 ]
 
 ROOT_URLCONF = 'dvm_django.urls'
@@ -72,7 +79,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'dvm_django.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -118,6 +124,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
+
+SITE_ID = 2
 
 STATIC_URL = 'static/'
 

@@ -27,3 +27,21 @@ class QuizMasterSignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+class GenericSignUp(UserCreationForm):
+    # add a dropdown field for selecting type of user
+    user_type = forms.ChoiceField(choices=[('quiz_taker', 'Quiz Taker'), ('quiz_master', 'Quiz Master')], required=True)
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.cleaned_data['user_type'] == 'quiz_taker':
+            user.is_quiz_taker = True
+            quiz_taker = QuizTaker.objects.create(user=user)
+        elif self.cleaned_data['user_type'] == 'quiz_master':
+            user.is_quiz_master = True
+        if commit:
+            user.save()
+        return user
